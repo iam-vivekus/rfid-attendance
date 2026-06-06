@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}Students{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h4 class="section-title mb-0"><i class="fas fa-users me-2 text-primary"></i>Students Management</h4>
+        <small class="text-muted">{{ students|length }} student(s) registered</small>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+            <i class="fas fa-plus me-1"></i>Add Student
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4">#</th>
+                        <th>Name</th>
+                        <th>Class</th>
+                        <th>Roll No.</th>
+                        <th>RFID UID</th>
+                        <th class="text-center pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody">
+                    {% if students %}
+                        {% for s in students %}
+                        <tr>
+                            <td class="ps-4 text-muted">{{ s.id }}</td>
+                            <td><strong>{{ s.name }}</strong></td>
+                            <td>{{ s.class_name }}</td>
+                            <td><code>{{ s.roll_number }}</code></td>
+                            <td>
+                                {% if s.rfid_uid %}
+                                    <span class="badge bg-success">{{ s.rfid_uid }}</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Not Assigned</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center pe-4">
+                                <button class="btn btn-sm btn-outline-warning me-1"
+                                    onclick="openEditModal({{ s.id }}, '{{ s.name }}', '{{ s.class_name }}', '{{ s.roll_number }}', '{{ s.rfid_uid or '' }}')">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger"
+                                    onclick="confirmDelete({{ s.id }}, '{{ s.name }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="fas fa-users fa-2x mb-2 d-block opacity-25"></i>
+                                No students yet — click <strong>Add Student</strong> to get started.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Add New Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" required placeholder="e.g. Alan Turing">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Class <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="class_name" required placeholder="e.g. 10-A">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Roll Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="roll_number" required placeholder="e.g. 2024001">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">RFID UID <span class="text-muted fw-normal">(optional)</span></label>
+                        <input type="text" class="form-control font-monospace" name="rfid_uid" placeholder="e.g. A1B2C3D4">
+                        <div class="form-text">Can be assigned later from Edit.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Add Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Student Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-pen me-2"></i>Edit Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Class <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editClass" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Roll Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editRoll" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">RFID UID</label>
+                        <input type="text" class="form-control font-monospace" id="editRfid" placeholder="Leave blank to unassign">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning"><i class="fas fa-save me-1"></i>Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-triangle-exclamation me-2"></i>Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Delete student <strong id="deleteStudentName"></strong>?
+                <div class="text-muted small mt-1">All attendance records for this student will also be deleted.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-danger btn-sm" id="deleteConfirmBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Add ──────────────────────────────────────────────────────────────────────
+document.getElementById("addForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = Object.fromEntries(fd.entries());
+    if (!data.rfid_uid) delete data.rfid_uid;
+
+    const res = await fetch("/students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (res.ok) {
+        showToast("Student added successfully!");
+        setTimeout(() => location.reload(), 800);
+    } else {
+        showToast(json.detail || "Failed to add student", "danger");
+    }
+});
+
+// ── Edit ─────────────────────────────────────────────────────────────────────
+function openEditModal(id, name, cls, roll, rfid) {
+    document.getElementById("editId").value = id;
+    document.getElementById("editName").value = name;
+    document.getElementById("editClass").value = cls;
+    document.getElementById("editRoll").value = roll;
+    document.getElementById("editRfid").value = rfid;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("editModal")).show();
+}
+
+document.getElementById("editForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = document.getElementById("editId").value;
+    const rfid = document.getElementById("editRfid").value.trim();
+    const data = {
+        name: document.getElementById("editName").value,
+        class_name: document.getElementById("editClass").value,
+        roll_number: document.getElementById("editRoll").value,
+        rfid_uid: rfid || null,
+    };
+
+    const res = await fetch(`/students/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (res.ok) {
+        showToast("Student updated!");
+        setTimeout(() => location.reload(), 800);
+    } else {
+        showToast(json.detail || "Update failed", "danger");
+    }
+});
+
+// ── Delete ───────────────────────────────────────────────────────────────────
+let pendingDeleteId = null;
+
+function confirmDelete(id, name) {
+    pendingDeleteId = id;
+    document.getElementById("deleteStudentName").textContent = name;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("deleteModal")).show();
+}
+
+document.getElementById("deleteConfirmBtn").addEventListener("click", async () => {
+    if (!pendingDeleteId) return;
+    const res = await fetch(`/students/${pendingDeleteId}`, { method: "DELETE" });
+    bootstrap.Modal.getInstance(document.getElementById("deleteModal")).hide();
+    if (res.ok) {
+        showToast("Student deleted", "warning");
+        setTimeout(() => location.reload(), 800);
+    } else {
+        showToast("Delete failed", "danger");
+    }
+});
+</script>
+{% endblock %}
