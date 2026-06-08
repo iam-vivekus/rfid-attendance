@@ -23,18 +23,17 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
-#include <WiFiClient.h>
+#include <WiFiClientSecure.h>
 #include <SPI.h>
 #include <MFRC522.h>
 #include <ArduinoJson.h>
 
 // ── Configuration ──────────────────────────────────────────────────────────
 
-const char* WIFI_SSID     = "Rahul";
-const char* WIFI_PASSWORD = "karthika1363";
+const char* WIFI_SSID     = "<wifi-ssid>";
+const char* WIFI_PASSWORD = "<wifi-password>";
 
-// Change to your server's local IP and port
-const char* SERVER_URL = "http://192.168.18.76:8000/mark-attendance";
+const char* SERVER_URL = "<server-url>/mark-attendance";
 
 // ── Pin Definitions ────────────────────────────────────────────────────────
 
@@ -46,7 +45,7 @@ const char* SERVER_URL = "http://192.168.18.76:8000/mark-attendance";
 // ── Globals ────────────────────────────────────────────────────────────────
 
 MFRC522 rfid(SS_PIN, RST_PIN);
-WiFiClient wifiClient;
+WiFiClientSecure wifiClient;
 
 // ── Setup ──────────────────────────────────────────────────────────────────
 
@@ -60,6 +59,7 @@ void setup() {
     digitalWrite(GREEN_LED, LOW);
     digitalWrite(RED_LED, LOW);
 
+    wifiClient.setInsecure();   // accept Railway's SSL cert without pinning
     connectWiFi();
 
     Serial.println("Ready — scan a card.");
